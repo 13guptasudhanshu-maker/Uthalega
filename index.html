@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1c2621">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Utha lega?">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>Utha lega?</title>
+<style>
+/* Layout: sticky app bar with four tabs; one scrolling column per screen; sub-pages slide over with a back bar */
+:root{
+  --bg:#121815; --panel:#1a221e; --deep:#0d1210; --bar:#1c2621; --line:#2c3832; --field:#3a4840;
+  --ink:#e7ece6; --soft:#b7c4bc; --muted:#93a59a; --accent:#e8a14a; --on-accent:#121815;
+  --ok:#6fcf93; --bad:#f07a6c; --warn:#e8a14a;
+  --display:"sans-serif-condensed","Roboto Condensed","Arial Narrow",sans-serif;
+  --body:Roboto,"Segoe UI",system-ui,sans-serif;
+  --mono:"Roboto Mono","Droid Sans Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;-webkit-text-size-adjust:100%;overscroll-behavior-y:none;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.4}
+button,input,select,textarea{font:inherit;color:inherit}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* app bar */
+.appbar{position:sticky;top:0;z-index:20;background:var(--bar);border-bottom:1px solid var(--line);padding:12px max(16px,env(safe-area-inset-right)) 10px max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:10px}
+.titlerow{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.apptitle{font-family:var(--display);font-weight:700;font-size:26px;line-height:1.05}
+.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;background:var(--bg);border-radius:8px;padding:3px}
+.tab{height:42px;border:0;border-radius:6px;background:transparent;color:var(--muted);font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.01em;text-transform:uppercase;padding:0 2px;overflow:hidden;white-space:nowrap}
+.tab[aria-selected="true"]{background:var(--line);color:var(--ink)}
+.subbar{position:sticky;top:0;z-index:20;background:var(--bar);border-bottom:1px solid var(--line);padding:8px 8px 8px 4px;display:flex;align-items:center;gap:4px;min-height:60px}
+.subbar h1{margin:0;font-family:var(--display);font-weight:700;font-size:22px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.iconbtn{width:44px;height:44px;border:0;background:transparent;display:grid;place-items:center;border-radius:8px;color:var(--ink)}
+.iconbtn svg{width:22px;height:22px}
+
+main{padding:16px max(16px,env(safe-area-inset-right)) calc(40px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:16px;max-width:640px;margin:0 auto}
+.sechead{display:flex;align-items:center;gap:10px}
+.secnum{font-family:var(--display);font-weight:700;font-size:13px;color:var(--on-accent);background:var(--accent);padding:1px 8px;border-radius:4px}
+.sectitle{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:.08em;text-transform:uppercase}
+.secnote{font-size:13px;color:var(--muted);margin-top:-8px}
+.divider{height:1px;background:var(--line);margin:8px 0}
+
+/* fields */
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field>label,.flabel{font-size:13px;font-weight:500;color:var(--soft)}
+.box{display:flex;align-items:center;gap:4px;height:48px;border:1px solid var(--field);border-radius:8px;background:var(--panel);padding:0 10px;min-width:0}
+.box:focus-within{border-color:var(--accent)}
+.box input{flex:1;width:100%;min-width:0;border:0;background:transparent;outline:none;font-family:var(--mono);font-size:17px;font-weight:500;padding:0}
+.box input.txt{font-family:var(--body);font-size:16px}
+.box .unit{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.box .pm{border:0;background:var(--line);color:var(--ink);border-radius:6px;width:34px;height:34px;font-size:16px;flex:none}
+.hint{font-family:var(--mono);font-size:11px;color:var(--muted);min-height:14px}
+.hint.edited{color:var(--accent)}
+select.sel{appearance:none;-webkit-appearance:none;height:48px;border:1px solid var(--field);border-radius:8px;background:var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%2393a59a' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center;padding:0 36px 0 12px;font-size:16px;font-weight:500;width:100%;min-width:0}
+select.sel:focus{outline:none;border-color:var(--accent)}
+textarea.note{min-height:80px;border:1px solid var(--field);border-radius:8px;background:var(--panel);padding:10px 12px;font-size:15px;resize:vertical;width:100%}
+textarea.note:focus{outline:none;border-color:var(--accent)}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+
+/* readouts */
+.readouts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border-radius:10px;overflow:hidden}
+.ro{background:var(--deep);padding:11px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.ro .k{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.ro .v{font-family:var(--mono);font-size:20px;font-weight:600}
+.ro .v small,.big small{font-size:12px;font-weight:400;color:var(--muted);margin-left:3px}
+.neg{color:var(--bad)!important}
+.cpiin{display:inline-flex;align-items:center;gap:4px}
+.cpiin input{width:56px;height:28px;border:1px solid var(--field);border-radius:5px;background:var(--panel);font-family:var(--mono);font-size:16px;padding:0 5px}
+
+.primary{display:flex;align-items:center;justify-content:center;gap:8px;height:52px;border:0;border-radius:10px;background:var(--accent);color:var(--on-accent);font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:.06em;text-transform:uppercase;width:100%}
+.ghost{height:44px;border:1px solid var(--accent);background:transparent;color:var(--accent);border-radius:8px;padding:0 14px;font-weight:600;font-size:14px}
+.ghost.danger{border-color:var(--bad);color:var(--bad)}
+.ghost.full{width:100%}
+.linkbtn{border:1px dashed var(--field);background:transparent;color:var(--soft);border-radius:8px;height:46px;font-weight:500;width:100%}
+
+.chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.chip{display:flex;flex-direction:column;gap:1px;padding:8px;border:1px solid var(--line);border-radius:8px;min-width:0}
+.chip span:first-child{font-size:11px;color:var(--muted)}
+.chip span:last-child{font-family:var(--mono);font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acline{font-size:13px;color:var(--soft);margin-top:-6px}
+
+.inst{background:var(--deep);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.hero{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap}
+.hero .big{font-family:var(--mono);font-size:56px;font-weight:600;line-height:.95;letter-spacing:-.02em}
+.pill{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;border:1px solid currentColor;border-radius:999px;padding:6px 10px}
+.pill.ok{color:var(--ok)}.pill.bad{color:var(--bad)}.pill.warn{color:var(--warn)}.pill.idle{color:var(--muted)}
+.gauge{position:relative;height:26px}
+.gauge .t{position:absolute;left:0;right:0;top:9px;height:8px;border-radius:4px;background:#24302a}
+.gauge .f{position:absolute;left:0;top:9px;height:8px;border-radius:4px;background:var(--ink);width:0}
+.gauge .m{position:absolute;top:1px;width:2px;height:24px;background:var(--accent)}
+.ticks{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;border-top:1px solid #24302a;padding-top:12px}
+.pair .k{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.pair .v{font-family:var(--mono);font-size:18px;font-weight:600}
+.pair .v small.sub{display:block;margin:2px 0 0;font-size:12px}
+
+.results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.res{background:var(--deep);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.res.key{border-color:var(--accent)}
+.res .k{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.res.key .k{color:var(--accent)}
+.res .v{font-family:var(--mono);font-size:38px;font-weight:600;line-height:1.05}
+.res .v.mid{font-size:28px}
+.res .s{font-size:12px;color:var(--muted)}
+.mtag{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:middle}
+
+.savebar{display:flex;gap:8px}
+.savebar .box{flex:1}
+
+/* lists */
+.list{display:flex;flex-direction:column;gap:8px}
+.group{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:8px 0 0}
+.row{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);width:100%;text-align:left;min-height:56px;user-select:none;-webkit-user-select:none}
+.row .main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.row .t1{font-weight:600;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .t2{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .rt{font-family:var(--mono);font-weight:600;text-align:right;flex:none}
+.row .rt small{display:block;font-weight:400;font-size:11px;color:var(--muted)}
+.hcard{padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);display:flex;flex-direction:column;gap:8px;width:100%;text-align:left;user-select:none;-webkit-user-select:none}
+.hcard .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.hcard .nm{font-weight:600;font-size:17px;color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.hcard .dt{font-family:var(--mono);font-size:11px;color:var(--muted);flex:none}
+.hgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.hgrid div{display:flex;flex-direction:column;min-width:0}
+.hgrid .k{font-size:11px;color:var(--muted)}
+.hgrid .v{font-family:var(--mono);font-size:14px;font-weight:600}
+.empty{padding:28px 16px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px}
+.helptext{font-size:13px;color:var(--muted)}
+
+/* misc slots */
+.slot{border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.slotrow{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:6px;align-items:center}
+.slotnums{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1fr) minmax(0,1fr);gap:6px;align-items:end}
+.slotnums .tot{height:48px;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;font-family:var(--mono);font-weight:600}
+.slotnums .tot small{font-size:11px;color:var(--muted);font-weight:400}
+.totalbar{display:flex;justify-content:space-between;align-items:center;padding:14px;border-radius:10px;background:var(--deep);border:1px solid var(--line)}
+.totalbar .v{font-family:var(--mono);font-size:20px;font-weight:600;text-align:right}
+.totalbar .v small{display:block;font-size:12px;font-weight:400;color:var(--muted)}
+.eqrow{display:grid;grid-template-columns:minmax(0,1fr) 92px 44px;gap:6px;align-items:center}
+.search{position:relative}
+
+/* sheet + toast */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:flex;align-items:flex-end}
+.sheet{background:var(--bar);width:100%;border-radius:16px 16px 0 0;padding:20px 16px calc(24px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--line)}
+.sheet h2{margin:0;font-family:var(--display);font-size:22px}
+.sheet p{margin:0;color:var(--soft)}
+.sheet .acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+.btn{height:48px;border-radius:10px;border:1px solid var(--field);background:transparent;font-weight:600}
+.btn.solid{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.red{background:var(--bad);border-color:var(--bad);color:#1a0d0b}
+.credit{text-align:center;font-size:12px;color:var(--muted);padding:8px 0 4px;letter-spacing:.02em}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;z-index:60;font-size:14px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(30px);opacity:.6}}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+"use strict";
+/* ============ constants (verified against the old app) ============ */
+const K = 6600;               // W/σ constant in lb (3000 kg) – unit safety margin
+const LBKG = 2.2046;          // lb per kg
+const CAP = 2300 * LBKG;      // max AUW 2300 kg
+const FUEL = 1.8;             // lb per litre
+const SEED_VERSION = 2;
+
+/* ============ seed data ============ */
+const SEED_ITEMS = [
+  ["CSP (each)",15],["SOP",30],["Stretcher assembly (2 stretchers)",35],["VIP seat cover/cushion (full backrest)",50],
+  ["VIP seat cover/cushion (strip backrest)",25],["Towing arm",7],["Aircraft covers",45],["Cargo equipment",30],
+  ["Oxygen bottles with fittings",30],["Rescue hoist",70],["Tool kit + PRB + Forms",10],["Snow survival pack",50],
+  ["Satellite phone with case",10]
+];
+// region, name, elevation, landing direction, margin, peculiarity
+const U="Unidirectional", B="Bowl apch", R="Restd apch";
+const SEED_HELIPADS = [
+  ["East Sikkim","Batangla",14400,"04/22",.15,U],["East Sikkim","Bhim Top",13800,"09/27",.15,U],["East Sikkim","Changu",11800,"09/27"],
+  ["East Sikkim","Dokala",12900,"09/27",.15,B],["East Sikkim","G'tok",4500,"13/31"],["East Sikkim","K'pong",4600,"13/31"],
+  ["East Sikkim","Kupup",12400,"16/34"],["East Sikkim","Labha",6500,"11/29"],["East Sikkim","Menla",10000,"18/23"],
+  ["East Sikkim","Nathang",12200,"06/24",.15,U+" & bowl apch"],["East Sikkim","Nakchok",13000,"02/20"],["East Sikkim","Pedong",4800,"04/22"],
+  ["East Sikkim","P'chen",6800,"09/27"],["East Sikkim","Penangla",6000,"03/21"],["East Sikkim","Rangpo",1050,"17/35"],
+  ["East Sikkim","Renok",3900,"06/24"],["East Sikkim","S'thang",12600,"13/31"],["East Sikkim","Singtham",1200,"16/34"],
+  ["East Sikkim","Thegu",12200,"09/27",.15,B],["East Sikkim","Zuluk",8900,"06/24",.15,B],
+  ["North Sikkim","Bunker",15300,"09/27"],["North Sikkim","C'thang",5400,"18/35"],["North Sikkim","Chatten",8300,"18/36"],
+  ["North Sikkim","Giagong",14950,"17/36"],["North Sikkim","Kerang",16000,"13/31"],["North Sikkim","M'thang",14300,"02/20"],
+  ["North Sikkim","Naku",14500,"02/18"],["North Sikkim","Samdong",11300,"18/36"],["North Sikkim","Thangu",12100,"14/32"],
+  ["North Sikkim","Yongdi",13100,"03/21",.15,R],["North Sikkim","Zanak",15000,"07/25"],["North Sikkim","20R",14300,"06/24"],
+  ["North Sikkim","Changri",17100,"10/19"],["North Sikkim","5555",17500,"06/24"],
+  ["West Sikkim","Lebong",6800,"09/27"],["West Sikkim","Namchi",4800,""],["West Sikkim","Rabangla",6800,"09/27"],
+  ["West Sikkim","St Paul School",7500,""],
+  ["North East Sikkim","Bump IV",14200,"10/28",.15,B],["North East Sikkim","Chhubakha",12300,"16/34"],["North East Sikkim","Dombang",9400,"06/24"],
+  ["North East Sikkim","Khukhri",8700,"22/36"],["North East Sikkim","Lachung",8600,"04/22"],["North East Sikkim","Shivmandir",12300,"18/36"],
+  ["North East Sikkim","Yumthang",11300,"18/36"],["North East Sikkim","Yums'dong (Y'Dong)",14600,"08/26",.15,U],
+  ["North East Sikkim","Area Temple",16500,"12"],["North East Sikkim","Gorala",15400,"04/22",.15,U],["North East Sikkim","Patala",15100,"03/3?"],
+  ["North East Sikkim","Bengdubi",465,""],["North East Sikkim","BSF Jalpaiguri",350,""],["North East Sikkim","Bagrakot",450,"18/36"],
+  ["North East Sikkim","Binagudi",500,""],["North East Sikkim","M'Bazar",580,""],["North East Sikkim","Mongpong",575,""],
+  ["North East Sikkim","Shaugaon",450,""],
+  ["Elevation to be added","Aritar",null,"",.15,U],["Elevation to be added","Chaman Top",null,"",.15,U],
+  ["Elevation to be added","Track Jn",null,"",.15,U],["Elevation to be added","Tamze",null,"",.15,B],
+  ["Elevation to be added","Sardhar Dhar",null,"",.15,U],["Elevation to be added","Pt 3777",null,"",.15,R]
+];
+const REGION_ORDER = ["East Sikkim","North Sikkim","West Sikkim","North East Sikkim","Elevation to be added"];
+
+/* ============ storage ============ */
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem("hp."+k); return v==null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem("hp."+k, JSON.stringify(v)); }catch(e){} }
+};
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+
+// Aircraft pre-fed in v1.1, removed in v1.2. Only one-way hashes are kept here, to clear them from phones that update.
+const OLD_SEED_HASHES = ["k4unpr","1j34x0k","1xspm3i","g20ro1","i6r4v0","1luumyc","8cfpni","1cie74v"];
+const hashStr = s => { let h = 0x811c9dc5; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(36); };
+function seed(){
+  const v = store.get("seed",0);
+  if (v >= SEED_VERSION) return;
+  if (v < 1){
+    store.set("aircraft", []);
+    store.set("items", SEED_ITEMS.map(([name,wt]) => ({id:uid(), name, wt})));
+    store.set("helipads", SEED_HELIPADS.map(([region,name,elev,ldg,margin,note]) => ({id:uid(), region, name, elev, ldg:ldg||"", margin:margin||.10, note:note||"", temp:"", date:""})));
+    store.set("history", []);
+  } else {
+    const ac = store.get("aircraft", []);
+    const keep = ac.filter(a => !OLD_SEED_HASHES.includes(hashStr(a.tail)));
+    store.set("aircraft", keep);
+    const cur = store.get("current", null);
+    if (cur && cur.aircraftId && !keep.some(a => a.id === cur.aircraftId)){ cur.aircraftId = ""; store.set("current", cur); }
+  }
+  store.set("seed", SEED_VERSION);
+}
+seed();
+
+let DB = { aircraft: store.get("aircraft",[]), items: store.get("items",[]), helipads: store.get("helipads",[]), history: store.get("history",[]) };
+const save = k => store.set(k, DB[k]);
+
+function blankCalc(){
+  return { depHeli:"", depElev:"", qnh:"1013", oat:"", cpi:"0.90",
+    aircraftId:"", emptyLb:"", pilotLb:"", copilotLb:"",
+    slots:[0,1,2,3,4].map(()=>({item:"", name:"", qty:"1", wt:""})),
+    fuel:"", dstHeli:"", dstElev:"", dstQnh:"1013", dstOat:"", burn:"", name:"" };
+}
+let C = Object.assign(blankCalc(), store.get("current", {}));
+const saveCurrent = () => store.set("current", C);
+
+/* ============ maths ============ */
+const n = v => { if (v===null || v===undefined || String(v).trim()==="") return NaN; const x = parseFloat(String(v).replace(/,/g,"")); return isFinite(x) ? x : NaN; };
+function atmos(elev, qnh, oat){
+  const pa = elev + (1013 - qnh) * 30;
+  const p = 1013 * Math.pow(1 - 6.8756e-6 * pa, 5.2559);
+  const sigma = (p / 1013) * (288 / (oat + 273));
+  const isa = 15 - 1.98 * pa / 1000;
+  const da = pa + 120 * (oat - isa);
+  const mpa = Math.min(1, Math.max(0.75, 0.80 + 0.01 * Math.floor(da / 660)));
+  return { pa, p, sigma, isa, da, mpa };
+}
+function heli(id){ return DB.helipads.find(h => h.id === id); }
+function slotLb(s){ const q = n(s.qty), w = n(s.wt); return (isNaN(q)||isNaN(w)) ? 0 : q*w; }
+function miscLb(){ return C.slots.reduce((a,s) => a + (s.item ? slotLb(s) : 0), 0); }
+function lessFuelLb(){
+  const parts = [n(C.emptyLb), n(C.pilotLb), n(C.copilotLb)].map(x => isNaN(x) ? 0 : x);
+  return parts[0] + parts[1] + parts[2] + miscLb();
+}
+function compute(){
+  const r = {};
+  const elev = n(C.depElev), qnh = n(C.qnh), oat = n(C.oat), cpi = n(C.cpi);
+  if (![elev,qnh,oat].some(isNaN)){
+    Object.assign(r, atmos(elev, qnh, oat));
+    if (!isNaN(cpi)) r.maxHover = Math.min(K * cpi * r.sigma, CAP);
+  }
+  const fuelL = n(C.fuel);
+  r.fuelLb = isNaN(fuelL) ? 0 : fuelL * FUEL;
+  r.lessFuel = lessFuelLb();
+  r.auw = r.lessFuel + r.fuelLb;
+  r.hasWeights = r.auw > 0;
+  if (r.sigma && r.hasWeights){
+    r.hp = r.auw / (K * r.sigma);
+    if (r.maxHover !== undefined) r.margin = r.maxHover - r.auw;
+  }
+  // cutoff power
+  const de = n(C.dstElev), dq = n(C.dstQnh), dt = n(C.dstOat), burnL = n(C.burn);
+  const dh = heli(C.dstHeli);
+  r.toMargin = dh ? (dh.margin || .10) : .10;
+  if (r.sigma && ![de,dq,dt].some(isNaN)){
+    const d = atmos(de, dq, dt);
+    r.dst = d;
+    r.usable = r.toMargin >= .15 ? Math.min(0.85, d.mpa - 0.15) : d.mpa - 0.10;
+    r.maxLand = K * r.usable * d.sigma;
+    r.burnLb = isNaN(burnL) ? 0 : burnL * FUEL;
+    r.maxDep = Math.min(r.maxLand + r.burnLb, CAP);
+    r.cutoff = r.maxDep / (K * r.sigma);
+  }
+  return r;
+}
+
+/* ============ formatting ============ */
+const fmt = (x, d=0) => (x===undefined || x===null || isNaN(x)) ? "—" : x.toLocaleString("en-IN", {minimumFractionDigits:d, maximumFractionDigits:d});
+const fx2 = x => (x===undefined || isNaN(x)) ? "—" : x.toFixed(2);
+const floor2 = x => (x===undefined || isNaN(x)) ? "—" : (Math.floor(x*100 + 1e-9)/100).toFixed(2);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $ = (s, el=document) => el.querySelector(s);
+const $$ = (s, el=document) => [...el.querySelectorAll(s)];
+
+/* ============ icons ============ */
+const ICON = {
+  back:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  chev:'<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  x:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  reset:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  trash:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+};
+
+/* ============ ui helpers ============ */
+function toast(msg){
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; t.setAttribute("role","status");
+  document.body.appendChild(t); setTimeout(() => t.remove(), 1800);
+}
+function confirmSheet(title, msg, okLabel, onOk, danger=true){
+  const s = document.createElement("div"); s.className = "scrim";
+  s.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sh-t"><h2 id="sh-t">${esc(title)}</h2><p>${esc(msg)}</p>
+    <div class="acts"><button class="btn" data-a="no">Cancel</button><button class="btn ${danger?"red":"solid"}" data-a="yes">${esc(okLabel)}</button></div></div>`;
+  s.addEventListener("click", e => {
+    const a = e.target.closest("[data-a]");
+    if (e.target === s || (a && a.dataset.a === "no")) s.remove();
+    else if (a && a.dataset.a === "yes"){ s.remove(); onOk(); }
+  });
+  document.body.appendChild(s); $("[data-a=yes]", s).focus();
+}
+function longPress(el, fn){
+  let t = null, fired = false;
+  const start = () => { fired = false; t = setTimeout(() => { fired = true; fn(); }, 550); };
+  const cancel = () => { clearTimeout(t); };
+  el.addEventListener("touchstart", start, {passive:true});
+  el.addEventListener("touchend", cancel); el.addEventListener("touchmove", cancel, {passive:true});
+  el.addEventListener("mousedown", start); el.addEventListener("mouseup", cancel); el.addEventListener("mouseleave", cancel);
+  el.addEventListener("contextmenu", e => { e.preventDefault(); if (!fired){ clearTimeout(t); fired = true; fn(); } });
+  el.addEventListener("click", e => { if (fired){ e.stopImmediatePropagation(); e.preventDefault(); fired = false; } }, true);
+}
+function field(id, label, value, unit, opts={}){
+  const im = opts.text ? 'inputmode="text"' : 'inputmode="decimal"';
+  return `<div class="field"><label for="${id}">${label}</label>
+    <div class="box">${opts.pm?`<button class="pm" type="button" data-pm="${id}" aria-label="Change sign">±</button>`:""}<input id="${id}" ${im} class="${opts.text?"txt":""}" value="${esc(value)}" autocomplete="off" ${opts.ph?`placeholder="${esc(opts.ph)}"`:""}>${unit?`<span class="unit">${unit}</span>`:""}</div>
+    ${opts.hint!==undefined?`<span class="hint" id="${id}-hint">${opts.hint}</span>`:""}</div>`;
+}
+function heliOptions(sel){
+  const groups = {};
+  DB.helipads.forEach(h => (groups[h.region||"Other"] = groups[h.region||"Other"] || []).push(h));
+  const regions = Object.keys(groups).sort((a,b) => {
+    const ia = REGION_ORDER.indexOf(a), ib = REGION_ORDER.indexOf(b);
+    return (ia<0?99:ia) - (ib<0?99:ib) || a.localeCompare(b);
+  });
+  let o = `<option value="">Manual entry</option>`;
+  regions.forEach(r => {
+    o += `<optgroup label="${esc(r)}">` + groups[r].sort((a,b)=>a.name.localeCompare(b.name)).map(h =>
+      `<option value="${h.id}" ${h.id===sel?"selected":""}>${esc(h.name)}${h.elev!=null&&h.elev!==""?` · ${h.elev} ft`:""}</option>`).join("") + `</optgroup>`;
+  });
+  return o;
+}
+function aircraftOptions(sel){
+  const groups = {};
+  DB.aircraft.forEach(a => (groups[a.flight||"Other"] = groups[a.flight||"Other"] || []).push(a));
+  let o = `<option value="">Manual entry</option>`;
+  Object.keys(groups).sort().forEach(g => {
+    o += `<optgroup label="${esc(g)}">` + groups[g].sort((a,b)=>a.tail.localeCompare(b.tail)).map(a =>
+      `<option value="${a.id}" ${a.id===sel?"selected":""}>${esc(a.tail)} · ${fmt(a.emptyLb)} lb</option>`).join("") + `</optgroup>`;
+  });
+  return o;
+}
+
+/* ============ routing ============ */
+const TABS = [["calc","Calculation"],["history","History"],["aircraft","Aircraft"],["helipads","Helipads"]];
+const app = $("#app");
+function route(){
+  const h = (location.hash || "#calc").slice(1);
+  const [name, arg] = h.split(":");
+  window.scrollTo(0,0);
+  if (name === "weights") return renderWeights();
+  if (name === "acedit") return renderAircraftEdit(arg);
+  if (name === "hedit") return renderHelipadEdit(arg);
+  if (name === "equipment") return renderEquipment();
+  if (name === "history") return renderHistory();
+  if (name === "aircraft") return renderAircraft();
+  if (name === "helipads") return renderHelipads();
+  return renderCalc();
+}
+window.addEventListener("hashchange", route);
+function go(h){ location.hash = h; }
+function back(fallback){ if (history.length > 1) history.back(); else location.replace("#"+fallback); }
+function appbar(active, right=""){
+  return `<header class="appbar"><div class="titlerow"><div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+      <span class="eyebrow">SA 315B Lama · Cheetah</span><span class="apptitle">Utha lega?</span></div>${right}</div>
+    <nav class="tabs" role="tablist">${TABS.map(([k,l]) => `<button class="tab" role="tab" aria-selected="${k===active}" data-tab="${k}">${l}</button>`).join("")}</nav></header>`;
+}
+function subbar(title, fallback, right=""){
+  return `<header class="subbar"><button class="iconbtn" data-back="${fallback}" aria-label="Back">${ICON.back}</button><h1>${esc(title)}</h1>${right}</header>`;
+}
+app.addEventListener("click", e => {
+  const t = e.target.closest("[data-tab]"); if (t){ if (location.hash.slice(1) !== t.dataset.tab) location.replace("#"+t.dataset.tab); return; }
+  const b = e.target.closest("[data-back]"); if (b){ back(b.dataset.back); return; }
+  const pm = e.target.closest("[data-pm]");
+  if (pm){ const inp = $("#"+pm.dataset.pm); const v = inp.value.trim(); inp.value = v.startsWith("-") ? v.slice(1) : (v ? "-"+v : "-"); inp.dispatchEvent(new Event("input",{bubbles:true})); inp.focus(); }
+});
+
+/* ============ CALCULATION ============ */
+function renderCalc(){
+  const dh = heli(C.depHeli), xh = heli(C.dstHeli);
+  const ac = DB.aircraft.find(a => a.id === C.aircraftId);
+  app.innerHTML = appbar("calc", `<button class="iconbtn" id="reset" aria-label="Reset calculation">${ICON.reset}</button>`) + `
+  <main>
+    <div class="savebar"><div class="box"><input id="name" class="txt" inputmode="text" placeholder="Name to save calculation" value="${esc(C.name)}" aria-label="Name to save calculation"></div>
+      <button class="ghost" id="save">Save</button></div>
+
+    <div class="sechead"><span class="secnum">1</span><span class="sectitle">Departure</span></div>
+    <div class="field"><label for="depHeli">Helipad</label><select id="depHeli" class="sel">${heliOptions(C.depHeli)}</select></div>
+    <div class="g3">
+      ${field("depElev","Elevation",C.depElev,"ft",{hint:""})}
+      ${field("qnh","QNH",C.qnh,"hPa")}
+      ${field("oat","OAT",C.oat,"°C",{pm:true})}
+    </div>
+    <div class="readouts">
+      <div class="ro"><span class="k">Pressure alt</span><span class="v" id="o-pa">—</span></div>
+      <div class="ro"><span class="k">Density alt</span><span class="v" id="o-da">—</span></div>
+      <div class="ro"><span class="k">Max power avail.</span><span class="v" id="o-mpa">—</span></div>
+      <div class="ro"><span class="k cpiin">Max AUW @ <input id="cpi" inputmode="decimal" value="${esc(C.cpi)}" aria-label="CPI for max hover AUW"></span><span class="v" id="o-mh">—</span></div>
+    </div>
+
+    <button class="primary" id="toWeights">Manage aircraft weights ${ICON.chev}</button>
+    <div class="acline" id="o-ac">${ac ? `Aircraft ${esc(ac.tail)} · ${esc(ac.flight)}` : "Aircraft: manual entry"}</div>
+    <div class="chips">
+      <div class="chip"><span>Empty</span><span id="c-e">—</span></div>
+      <div class="chip"><span>Pilot</span><span id="c-p">—</span></div>
+      <div class="chip"><span>Co-pilot</span><span id="c-c">—</span></div>
+      <div class="chip"><span>Misc</span><span id="c-m">—</span></div>
+    </div>
+    <div class="g2">
+      ${field("fuel","Fuel on board",C.fuel,"L")}
+      <div class="field"><span class="flabel">Fuel weight</span><div class="box" style="border-style:dashed"><span class="num" id="o-fuel" style="font-size:17px">—</span><span class="unit" style="margin-left:auto">lb</span></div></div>
+    </div>
+
+    <div class="inst" aria-live="polite">
+      <div class="hero"><div style="display:flex;flex-direction:column;gap:4px"><span class="eyebrow">Actual hover power</span><span class="big" id="o-hp">—</span></div><span class="pill idle" id="o-st">Enter data</span></div>
+      <div><div class="gauge"><div class="t"></div><div class="f" id="g-f"></div><div class="m" id="g-m" hidden></div></div>
+        <div class="ticks"><span>0.60</span><span>0.70</span><span>0.80</span><span>0.90</span><span>1.00</span></div></div>
+      <div class="pair">
+        <div style="display:flex;flex-direction:column;gap:2px"><span class="k">Actual hover AUW</span><span class="v" id="o-auw">—</span></div>
+        <div style="display:flex;flex-direction:column;gap:2px"><span class="k">Load margin</span><span class="v" id="o-lm">—</span></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="sechead"><span class="secnum">2</span><span class="sectitle">Cutoff power</span></div>
+    <div class="secnote">Departure conditions are taken from section 1.</div>
+    <div class="field"><label for="dstHeli">Destination helipad <span id="o-tm"></span></label><select id="dstHeli" class="sel">${heliOptions(C.dstHeli)}</select></div>
+    <div class="g2">
+      ${field("dstElev","Elevation",C.dstElev,"ft",{hint:""})}
+      ${field("burn","Fuel burnt en route",C.burn,"L")}
+      ${field("dstQnh","QNH",C.dstQnh,"hPa")}
+      ${field("dstOat","OAT",C.dstOat,"°C",{pm:true})}
+    </div>
+    <div class="results">
+      <div class="res key"><span class="k">Cutoff power</span><span class="v" id="o-co">—</span><span class="s">Max CPI at departure</span></div>
+      <div class="res"><span class="k">Max departure AUW</span><span class="v mid" id="o-md">—</span><span class="s num" id="o-mdk">—</span></div>
+    </div>
+    <div class="credit">Made by Sudhanshu Gupta</div>
+  </main>`;
+
+  const map = {depElev:"depElev", qnh:"qnh", oat:"oat", cpi:"cpi", fuel:"fuel", dstElev:"dstElev", burn:"burn", dstQnh:"dstQnh", dstOat:"dstOat", name:"name"};
+  Object.keys(map).forEach(id => $("#"+id).addEventListener("input", e => { C[map[id]] = e.target.value; saveCurrent(); updateCalc(); }));
+  $("#depHeli").addEventListener("change", e => pickHeli("dep", e.target.value));
+  $("#dstHeli").addEventListener("change", e => pickHeli("dst", e.target.value));
+  $("#toWeights").addEventListener("click", () => go("weights"));
+  $("#save").addEventListener("click", saveCalc);
+  $("#reset").addEventListener("click", () => confirmSheet("Reset calculation?", "All entries on this screen and in Manage Aircraft Weights will be cleared. Saved history is not affected.", "Reset", () => { C = blankCalc(); saveCurrent(); renderCalc(); toast("Cleared"); }));
+  updateCalc();
+}
+function pickHeli(which, id){
+  const h = heli(id);
+  if (which === "dep"){ C.depHeli = id; if (h){ C.depElev = h.elev==null ? "" : String(h.elev); $("#depElev").value = C.depElev; if (h.elev==null) $("#depElev").focus(); } }
+  else { C.dstHeli = id; if (h){ C.dstElev = h.elev==null ? "" : String(h.elev); $("#dstElev").value = C.dstElev; if (h.elev==null) $("#dstElev").focus(); } }
+  saveCurrent(); updateCalc();
+}
+function elevHint(id, heliId, val){
+  const el = $("#"+id+"-hint"); if (!el) return;
+  const h = heli(heliId);
+  const v = n(val);
+  el.className = "hint";
+  if (h && h.elev==null && isNaN(v)){ el.textContent = "Add elevation"; el.classList.add("edited"); return; }
+  if (h && h.elev!=null && v !== h.elev){ el.textContent = `Edited · list ${h.elev}`; el.classList.add("edited"); return; }
+  el.textContent = isNaN(v) ? "" : fmt(v*0.3048,0) + " m";
+}
+function updateCalc(){
+  const r = compute();
+  const setH = (id, html) => { const el = $("#"+id); if (el) el.innerHTML = html; };
+  setH("o-pa", r.pa!==undefined ? `${fmt(r.pa)}<small>ft</small>` : "—");
+  setH("o-da", r.da!==undefined ? `${fmt(r.da)}<small>ft</small>` : "—");
+  setH("o-mpa", r.mpa!==undefined ? fx2(r.mpa) : "—");
+  setH("o-mh", r.maxHover!==undefined ? `${fmt(r.maxHover)}<small>lb</small>` : "—");
+  elevHint("depElev", C.depHeli, C.depElev);
+  elevHint("dstElev", C.dstHeli, C.dstElev);
+  const lb = x => isNaN(n(x)) ? "—" : fmt(n(x));
+  setH("c-e", lb(C.emptyLb)); setH("c-p", lb(C.pilotLb)); setH("c-c", lb(C.copilotLb)); setH("c-m", fmt(miscLb()));
+  setH("o-fuel", fmt(r.fuelLb));
+  setH("o-auw", r.hasWeights ? `${fmt(r.auw)}<small>lb</small>` : "—");
+  setH("o-hp", r.hp!==undefined ? fx2(r.hp) : "—");
+  const lm = $("#o-lm");
+  if (r.margin!==undefined){ lm.innerHTML = `${fmt(r.margin,1)}<small>lb</small><small class="sub">${fmt(r.margin/LBKG,1)} kg</small>`; lm.classList.toggle("neg", r.margin < 0); }
+  else { lm.textContent = "—"; lm.classList.remove("neg"); }
+  const st = $("#o-st");
+  if (r.hp===undefined){ st.className = "pill idle"; st.textContent = "Enter data"; }
+  else if (r.hp > r.mpa){ st.className = "pill bad"; st.textContent = "Exceeds max power"; }
+  else if (r.margin!==undefined && r.margin < 0){ st.className = "pill warn"; st.textContent = "Over max AUW"; }
+  else { st.className = "pill ok"; st.textContent = "Within limits"; }
+  const pos = x => Math.max(0, Math.min(100, (x - 0.6) / 0.4 * 100));
+  const gf = $("#g-f"), gm = $("#g-m");
+  gf.style.width = r.hp!==undefined ? pos(r.hp)+"%" : "0";
+  gf.style.background = st.classList.contains("bad") ? "var(--bad)" : st.classList.contains("warn") ? "var(--warn)" : "var(--ink)";
+  if (r.mpa!==undefined){ gm.hidden = false; gm.style.left = `calc(${pos(r.mpa)}% - 1px)`; } else gm.hidden = true;
+  setH("o-tm", C.dstHeli ? `<span class="mtag">T/O margin ${r.toMargin>=.15?"0.15":"0.10"}</span>` : "");
+  setH("o-co", r.cutoff!==undefined ? floor2(r.cutoff) : "—");
+  setH("o-md", r.maxDep!==undefined ? `${fmt(r.maxDep)}<small>lb</small>` : "—");
+  setH("o-mdk", r.maxDep!==undefined ? `${fmt(r.maxDep/LBKG)} kg` : "—");
+}
+function saveCalc(){
+  const r = compute();
+  if (r.sigma===undefined){ toast("Enter elevation, QNH and OAT first"); return; }
+  const dh = heli(C.depHeli), xh = heli(C.dstHeli);
+  const ac = DB.aircraft.find(a => a.id === C.aircraftId);
+  const now = new Date();
+  const name = C.name.trim() || `${dh ? dh.name : n(C.depElev)+" ft"} ${now.toLocaleDateString("en-IN",{day:"2-digit",month:"short"})}`;
+  DB.history.unshift({ id:uid(), ts:now.getTime(), name, inputs: JSON.parse(JSON.stringify(C)),
+    sum:{ dep: dh ? dh.name : "", elev:n(C.depElev), oat:n(C.oat), hp:r.hp, margin:r.margin, auw:r.hasWeights?r.auw:undefined,
+      tail: ac ? ac.tail : "", dst: xh ? xh.name : (isNaN(n(C.dstElev))?"":n(C.dstElev)+" ft"), cutoff:r.cutoff } });
+  save("history");
+  toast("Saved to history");
+}
+
+/* ============ WEIGHTS ============ */
+function renderWeights(){
+  app.innerHTML = subbar("Manage aircraft weights","calc") + `
+  <main>
+    <div class="helptext">Enter weights in kg or lb. The other box fills in automatically.</div>
+    <div class="field"><label for="acSel">Aircraft</label><select id="acSel" class="sel">${aircraftOptions(C.aircraftId)}</select></div>
+    ${pairRow("emptyLb","Empty weight")}
+    ${pairRow("pilotLb","Pilot weight")}
+    ${pairRow("copilotLb","Co-pilot weight")}
+    <div class="sechead" style="margin-top:6px"><span class="sectitle">Misc weight</span></div>
+    <div id="slots" class="list"></div>
+    <button class="linkbtn" id="addSlot">+ Add item</button>
+    <div class="totalbar"><span class="flabel">Misc total</span><span class="v" id="w-misc">—</span></div>
+    <div class="totalbar"><span class="flabel">AUW less fuel</span><span class="v" id="w-tot">—</span></div>
+    <button class="primary" data-back="calc">Done</button>
+  </main>`;
+  $("#acSel").addEventListener("change", e => {
+    C.aircraftId = e.target.value;
+    const a = DB.aircraft.find(x => x.id === C.aircraftId);
+    if (a){ C.emptyLb = String(a.emptyLb); setPair("emptyLb"); }
+    saveCurrent(); updateWeights();
+  });
+  ["emptyLb","pilotLb","copilotLb"].forEach(k => {
+    setPair(k);
+    $("#"+k+"-kg").addEventListener("input", e => { const v = n(e.target.value); C[k] = isNaN(v) ? "" : String(+(v*LBKG).toFixed(1)); $("#"+k+"-lb").value = C[k]; saveCurrent(); updateWeights(); });
+    $("#"+k+"-lb").addEventListener("input", e => { C[k] = e.target.value; const v = n(e.target.value); $("#"+k+"-kg").value = isNaN(v) ? "" : String(+(v/LBKG).toFixed(1)); saveCurrent(); updateWeights(); });
+  });
+  $("#addSlot").addEventListener("click", () => { C.slots.push({item:"",name:"",qty:"1",wt:""}); saveCurrent(); renderSlots(); });
+  renderSlots();
+}
+function pairRow(k, label){
+  return `<div class="field"><span class="flabel">${label}</span><div class="g2">
+    <div class="box"><input id="${k}-kg" inputmode="decimal" aria-label="${label} in kg" autocomplete="off"><span class="unit">kg</span></div>
+    <div class="box"><input id="${k}-lb" inputmode="decimal" aria-label="${label} in lb" autocomplete="off"><span class="unit">lb</span></div></div></div>`;
+}
+function setPair(k){
+  const v = n(C[k]);
+  $("#"+k+"-lb").value = isNaN(v) ? "" : C[k];
+  $("#"+k+"-kg").value = isNaN(v) ? "" : String(+(v/LBKG).toFixed(1));
+}
+function itemOptions(sel){
+  return `<option value="">Select item</option>` + DB.items.map(i => `<option value="${i.id}" ${i.id===sel?"selected":""}>${esc(i.name)} · ${i.wt} lb</option>`).join("") +
+    `<option value="other" ${sel==="other"?"selected":""}>Other (custom)</option>`;
+}
+function renderSlots(){
+  const wrap = $("#slots");
+  wrap.innerHTML = C.slots.map((s,i) => `
+    <div class="slot" data-i="${i}">
+      <div class="slotrow"><select class="sel" data-f="item" aria-label="Item ${i+1}">${itemOptions(s.item)}</select>
+        <button class="iconbtn" data-del="${i}" aria-label="Remove item ${i+1}">${ICON.x}</button></div>
+      ${s.item==="other" ? `<div class="box"><input class="txt" data-f="name" inputmode="text" placeholder="Item name" value="${esc(s.name)}" aria-label="Custom item name"></div>` : ""}
+      <div class="slotnums">
+        <div class="field"><span class="flabel">Qty</span><div class="box"><input data-f="qty" inputmode="numeric" value="${esc(s.qty)}" aria-label="Quantity"></div></div>
+        <div class="field"><span class="flabel">Each</span><div class="box"><input data-f="wt" inputmode="decimal" value="${esc(s.wt)}" aria-label="Weight each in lb"><span class="unit">lb</span></div></div>
+        <div class="tot"><small>Total</small><span data-tot>${s.item ? fmt(slotLb(s),1)+" lb" : "—"}</span></div>
+      </div>
+    </div>`).join("");
+  $$(".slot", wrap).forEach(el => {
+    const i = +el.dataset.i;
+    $$("[data-f]", el).forEach(inp => {
+      const f = inp.dataset.f;
+      inp.addEventListener(inp.tagName === "SELECT" ? "change" : "input", e => {
+        const s = C.slots[i]; s[f] = e.target.value;
+        if (f === "item"){
+          const it = DB.items.find(x => x.id === s.item);
+          if (it) s.wt = String(it.wt); else if (s.item !== "other") s.wt = "";
+          if (s.item === "other" && !s.wt) s.wt = "";
+          saveCurrent(); renderSlots(); return;
+        }
+        $("[data-tot]", el).textContent = s.item ? fmt(slotLb(s),1)+" lb" : "—";
+        saveCurrent(); updateWeights();
+      });
+    });
+  });
+  $$("[data-del]", wrap).forEach(b => b.addEventListener("click", () => { C.slots.splice(+b.dataset.del,1); saveCurrent(); renderSlots(); }));
+  updateWeights();
+}
+function updateWeights(){
+  const m = $("#w-misc"), t = $("#w-tot");
+  if (m) m.textContent = fmt(miscLb(),1) + " lb";
+  if (t){ const lb = lessFuelLb(); t.innerHTML = `${fmt(lb,1)} lb<small>${fmt(lb/LBKG,1)} kg</small>`; }
+}
+
+/* ============ HISTORY ============ */
+function renderHistory(){
+  const items = DB.history;
+  app.innerHTML = appbar("history") + `<main>
+    <div class="helptext">Tap a calculation to open it. Long press to delete it.</div>
+    <div class="list" id="hl">${items.length ? items.map(h => {
+      const s = h.sum || {};
+      const d = new Date(h.ts);
+      const neg = s.margin!==undefined && s.margin < 0;
+      return `<button class="hcard" data-h="${h.id}">
+        <div class="top"><span class="nm">${esc(h.name)}</span><span class="dt">${d.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"2-digit"})} ${d.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",hour12:false})}</span></div>
+        <div class="hgrid">
+          <div><span class="k">${s.dep?esc(s.dep):"Altitude"}</span><span class="v">${fmt(s.elev)} ft</span></div>
+          <div><span class="k">Temp</span><span class="v">${fmt(s.oat,1)} °C</span></div>
+          <div><span class="k">Hover power</span><span class="v">${fx2(s.hp)}</span></div>
+          <div><span class="k">Load margin</span><span class="v ${neg?"neg":""}">${fmt(s.margin,1)} lb</span></div>
+          <div><span class="k">&nbsp;</span><span class="v ${neg?"neg":""}">${s.margin!==undefined?fmt(s.margin/LBKG,1)+" kg":"—"}</span></div>
+          <div><span class="k">Cutoff${s.dst?" · "+esc(s.dst):""}</span><span class="v">${floor2(s.cutoff)}</span></div>
+        </div></button>`;
+    }).join("") : `<div class="empty">No saved calculations yet. Enter a name on the Calculation tab and tap Save.</div>`}</div></main>`;
+  $$("[data-h]").forEach(el => {
+    const id = el.dataset.h;
+    longPress(el, () => {
+      const h = DB.history.find(x => x.id === id);
+      confirmSheet("Delete calculation?", `“${h.name}” will be removed from history.`, "Delete", () => { DB.history = DB.history.filter(x => x.id !== id); save("history"); renderHistory(); toast("Deleted"); });
+    });
+    el.addEventListener("click", () => {
+      const h = DB.history.find(x => x.id === id); if (!h) return;
+      C = Object.assign(blankCalc(), JSON.parse(JSON.stringify(h.inputs))); saveCurrent();
+      location.replace("#calc"); toast("Opened " + h.name);
+    });
+  });
+}
+
+/* ============ AIRCRAFT ============ */
+function renderAircraft(){
+  const groups = {};
+  DB.aircraft.forEach(a => (groups[a.flight||"Other"] = groups[a.flight||"Other"] || []).push(a));
+  app.innerHTML = appbar("aircraft") + `<main>
+    <button class="ghost full" id="addAc">+ Add aircraft</button>
+    ${Object.keys(groups).sort().map(g => `<div class="group">${esc(g)}</div><div class="list">${groups[g].sort((a,b)=>a.tail.localeCompare(b.tail)).map(a => `
+      <button class="row" data-ac="${a.id}"><span class="main"><span class="t1">${esc(a.tail)}</span><span class="t2">${esc([a.equipment,a.concessions,a.limitations].filter(Boolean).join(" · ") || "No notes")}</span></span>
+      <span class="rt">${fmt(a.emptyLb,1)} lb<small>${fmt(a.emptyLb/LBKG,2)} kg</small></span></button>`).join("")}</div>`).join("") || `<div class="empty">No aircraft yet. Tap Add aircraft to enter a tail number and empty weight.</div>`}
+    <div class="divider"></div>
+    <button class="row" id="toEq"><span class="main"><span class="t1">Optional equipment weights</span><span class="t2">${DB.items.length} items · used in Misc weight</span></span>${ICON.chev}</button>
+  </main>`;
+  $("#addAc").addEventListener("click", () => go("acedit:new"));
+  $("#toEq").addEventListener("click", () => go("equipment"));
+  $$("[data-ac]").forEach(b => b.addEventListener("click", () => go("acedit:"+b.dataset.ac)));
+}
+function renderAircraftEdit(id){
+  const isNew = id === "new";
+  const a = isNew ? {id:uid(), flight:"", tail:"", emptyLb:"", equipment:"", concessions:"", limitations:""} : DB.aircraft.find(x => x.id === id);
+  if (!a){ location.replace("#aircraft"); return; }
+  const flights = [...new Set(DB.aircraft.map(x => x.flight).filter(Boolean))];
+  app.innerHTML = subbar(isNew ? "Add aircraft" : a.tail, "aircraft") + `<main>
+    <div class="g2">${field("f-tail","Aircraft number",a.tail,"",{text:true,ph:"Z-0000"})}${field("f-flt","Flight",a.flight,"",{text:true,ph:"20 Flt"})}</div>
+    ${flights.length ? `<div class="helptext">Flights in use: ${flights.map(esc).join(", ")}</div>` : ""}
+    <div class="field"><span class="flabel">Empty weight</span><div class="g2">
+      <div class="box"><input id="f-kg" inputmode="decimal" aria-label="Empty weight in kg" value="${a.emptyLb!==""?+(a.emptyLb/LBKG).toFixed(2):""}"><span class="unit">kg</span></div>
+      <div class="box"><input id="f-lb" inputmode="decimal" aria-label="Empty weight in lb" value="${esc(a.emptyLb)}"><span class="unit">lb</span></div></div></div>
+    <div class="field"><label for="f-eq">Additional equipment</label><textarea id="f-eq" class="note">${esc(a.equipment)}</textarea></div>
+    <div class="field"><label for="f-con">Concessions</label><textarea id="f-con" class="note">${esc(a.concessions)}</textarea></div>
+    <div class="field"><label for="f-lim">Limitations</label><textarea id="f-lim" class="note">${esc(a.limitations)}</textarea></div>
+    <button class="primary" id="f-save">Save aircraft</button>
+    ${isNew ? "" : `<button class="ghost danger full" id="f-del">Delete aircraft</button>`}
+  </main>`;
+  $("#f-kg").addEventListener("input", e => { const v = n(e.target.value); $("#f-lb").value = isNaN(v) ? "" : +(v*LBKG).toFixed(1); });
+  $("#f-lb").addEventListener("input", e => { const v = n(e.target.value); $("#f-kg").value = isNaN(v) ? "" : +(v/LBKG).toFixed(2); });
+  $("#f-save").addEventListener("click", () => {
+    const tail = $("#f-tail").value.trim(), lb = n($("#f-lb").value);
+    if (!tail){ toast("Enter the aircraft number"); $("#f-tail").focus(); return; }
+    if (isNaN(lb)){ toast("Enter the empty weight"); $("#f-kg").focus(); return; }
+    Object.assign(a, { tail, flight:$("#f-flt").value.trim(), emptyLb:+lb.toFixed(1), equipment:$("#f-eq").value.trim(), concessions:$("#f-con").value.trim(), limitations:$("#f-lim").value.trim() });
+    if (isNew) DB.aircraft.push(a);
+    save("aircraft"); toast("Aircraft saved"); back("aircraft");
+  });
+  if (!isNew) $("#f-del").addEventListener("click", () => confirmSheet("Delete aircraft?", `${a.tail} will be removed. Saved history is not affected.`, "Delete", () => {
+    DB.aircraft = DB.aircraft.filter(x => x.id !== a.id); save("aircraft"); if (C.aircraftId === a.id){ C.aircraftId = ""; saveCurrent(); } toast("Deleted"); back("aircraft");
+  }));
+}
+function renderEquipment(){
+  app.innerHTML = subbar("Optional equipment","aircraft") + `<main>
+    <div class="helptext">Weights in lb. Changes are saved as you type and used for new selections in Misc weight.</div>
+    <div class="list" id="eq">${DB.items.map(i => `
+      <div class="eqrow" data-eq="${i.id}"><div class="box"><input class="txt" data-f="name" inputmode="text" value="${esc(i.name)}" aria-label="Item name"></div>
+        <div class="box"><input data-f="wt" inputmode="decimal" value="${esc(i.wt)}" aria-label="Weight in lb"><span class="unit">lb</span></div>
+        <button class="iconbtn" data-rm="${i.id}" aria-label="Delete ${esc(i.name)}">${ICON.trash}</button></div>`).join("")}</div>
+    <button class="linkbtn" id="addEq">+ Add equipment</button>
+  </main>`;
+  $$("[data-eq]").forEach(row => {
+    const it = DB.items.find(x => x.id === row.dataset.eq);
+    $$("[data-f]", row).forEach(inp => inp.addEventListener("input", e => {
+      if (inp.dataset.f === "wt"){ const v = n(e.target.value); if (!isNaN(v)) it.wt = v; } else it.name = e.target.value;
+      save("items");
+    }));
+  });
+  $$("[data-rm]").forEach(b => b.addEventListener("click", () => {
+    const it = DB.items.find(x => x.id === b.dataset.rm);
+    confirmSheet("Delete equipment?", `${it.name} will be removed from the list.`, "Delete", () => { DB.items = DB.items.filter(x => x.id !== it.id); save("items"); renderEquipment(); });
+  }));
+  $("#addEq").addEventListener("click", () => { DB.items.push({id:uid(), name:"New item", wt:0}); save("items"); renderEquipment(); const ins = $$("#eq .txt"); const last = ins[ins.length-1]; last.focus(); last.select(); });
+}
+
+/* ============ HELIPADS ============ */
+let heliQuery = "";
+function renderHelipads(){
+  app.innerHTML = appbar("helipads") + `<main>
+    <div class="g2" style="grid-template-columns:minmax(0,1fr) auto">
+      <div class="box"><input id="hq" class="txt" inputmode="search" placeholder="Search helipads" value="${esc(heliQuery)}" aria-label="Search helipads"></div>
+      <button class="ghost" id="addH">+ Add</button></div>
+    <div id="hlist"></div></main>`;
+  $("#hq").addEventListener("input", e => { heliQuery = e.target.value; drawHelis(); });
+  $("#addH").addEventListener("click", () => go("hedit:new"));
+  drawHelis();
+}
+function drawHelis(){
+  const q = heliQuery.trim().toLowerCase();
+  const groups = {};
+  DB.helipads.filter(h => !q || h.name.toLowerCase().includes(q) || (h.region||"").toLowerCase().includes(q))
+    .forEach(h => (groups[h.region||"Other"] = groups[h.region||"Other"] || []).push(h));
+  const regions = Object.keys(groups).sort((a,b) => { const ia = REGION_ORDER.indexOf(a), ib = REGION_ORDER.indexOf(b); return (ia<0?99:ia)-(ib<0?99:ib) || a.localeCompare(b); });
+  $("#hlist").innerHTML = regions.map(r => `<div class="group">${esc(r)}</div><div class="list">${groups[r].sort((a,b)=>a.name.localeCompare(b.name)).map(h => `
+    <button class="row" data-he="${h.id}"><span class="main"><span class="t1">${esc(h.name)}${h.margin>=.15?`<span class="mtag">0.15</span>`:""}</span>
+      <span class="t2">LDG ${esc(h.ldg||"—")}${h.temp!==""&&h.temp!=null?` · ${esc(h.temp)} °C`:""}${h.date?` · ${esc(h.date)}`:""}${h.note?` · ${esc(h.note)}`:""}</span></span>
+      <span class="rt">${h.elev==null||h.elev===""?`<span style="color:var(--accent)">Add</span>`:fmt(h.elev)+" ft"}</span></button>`).join("")}</div>`).join("")
+    || `<div class="empty">No helipads match “${esc(heliQuery)}”.</div>`;
+  $$("[data-he]").forEach(b => b.addEventListener("click", () => go("hedit:"+b.dataset.he)));
+}
+function renderHelipadEdit(id){
+  const isNew = id === "new";
+  const h = isNew ? {id:uid(), region:"", name:"", elev:null, ldg:"", margin:.10, note:"", temp:"", date:""} : heli(id);
+  if (!h){ location.replace("#helipads"); return; }
+  const regions = [...new Set(DB.helipads.map(x => x.region).filter(Boolean))];
+  app.innerHTML = subbar(isNew ? "Add helipad" : h.name, "helipads") + `<main>
+    ${field("h-name","Helipad name",h.name,"",{text:true})}
+    <div class="g2">${field("h-elev","Elevation",h.elev==null?"":h.elev,"ft")}${field("h-ldg","Landing direction",h.ldg,"",{text:true,ph:"09/27"})}</div>
+    <div class="g2">${field("h-temp","Temperature",h.temp,"°C",{pm:true})}
+      <div class="field"><label for="h-date">Date elevation recorded</label><div class="box"><input id="h-date" type="date" class="txt" value="${esc(h.date)}"></div></div></div>
+    <div class="field"><label for="h-region">Region</label><div class="box"><input id="h-region" class="txt" inputmode="text" list="regions" value="${esc(h.region)}"></div>
+      <datalist id="regions">${regions.map(r => `<option value="${esc(r)}">`).join("")}</datalist></div>
+    <div class="field"><label for="h-margin">Take-off margin (cutoff power)</label><select id="h-margin" class="sel">
+      <option value="0.10" ${h.margin<.15?"selected":""}>0.10 · standard</option>
+      <option value="0.15" ${h.margin>=.15?"selected":""}>0.15 · peculiar helipad (0.85 or max − 0.15, whichever is less)</option></select></div>
+    <div class="field"><label for="h-note">Peculiarity / notes</label><textarea id="h-note" class="note">${esc(h.note)}</textarea></div>
+    <button class="primary" id="h-save">Save helipad</button>
+    ${isNew ? "" : `<button class="ghost danger full" id="h-del">Delete helipad</button>`}
+  </main>`;
+  $("#h-save").addEventListener("click", () => {
+    const name = $("#h-name").value.trim();
+    if (!name){ toast("Enter the helipad name"); $("#h-name").focus(); return; }
+    const ev = n($("#h-elev").value);
+    Object.assign(h, { name, elev: isNaN(ev) ? null : ev, ldg:$("#h-ldg").value.trim(), temp:$("#h-temp").value.trim(), date:$("#h-date").value,
+      region:$("#h-region").value.trim() || "Other", margin: parseFloat($("#h-margin").value), note:$("#h-note").value.trim() });
+    if (isNew) DB.helipads.push(h);
+    save("helipads"); toast("Helipad saved"); back("helipads");
+  });
+  if (!isNew) $("#h-del").addEventListener("click", () => confirmSheet("Delete helipad?", `${h.name} will be removed from the list.`, "Delete", () => {
+    DB.helipads = DB.helipads.filter(x => x.id !== h.id); save("helipads");
+    if (C.depHeli === h.id) C.depHeli = ""; if (C.dstHeli === h.id) C.dstHeli = ""; saveCurrent();
+    toast("Deleted"); back("helipads");
+  }));
+}
+
+route();
+if ("serviceWorker" in navigator && location.protocol === "https:") {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch(e) {}
+</script>
+</body>
+</html>
